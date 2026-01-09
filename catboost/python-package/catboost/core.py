@@ -1138,7 +1138,6 @@ class Pool(_PoolBase):
         return self
 
     def set_baseline(self, baseline):
-        self._check_baseline_type(baseline)
         baseline = self._if_pandas_to_numpy(baseline)
         baseline = np.reshape(baseline, (self.num_row(), -1))
         self._check_baseline_shape(baseline, self.num_row())
@@ -1146,42 +1145,36 @@ class Pool(_PoolBase):
         return self
 
     def set_weight(self, weight):
-        self._check_weight_type(weight)
         weight = self._if_pandas_to_numpy(weight)
         self._check_weight_shape(weight, self.num_row())
         self._set_weight(weight)
         return self
 
     def set_group_id(self, group_id):
-        self._check_group_id_type(group_id)
         group_id = self._if_pandas_to_numpy(group_id)
         self._check_group_id_shape(group_id, self.num_row())
         self._set_group_id(group_id)
         return self
 
     def set_group_weight(self, group_weight):
-        self._check_group_weight_type(group_weight)
         group_weight = self._if_pandas_to_numpy(group_weight)
         self._check_group_weight_shape(group_weight, self.num_row())
         self._set_group_weight(group_weight)
         return self
 
     def set_subgroup_id(self, subgroup_id):
-        self._check_subgroup_id_type(subgroup_id)
         subgroup_id = self._if_pandas_to_numpy(subgroup_id)
         self._check_subgroup_id_shape(subgroup_id, self.num_row())
         self._set_subgroup_id(subgroup_id)
         return self
 
     def set_pairs_weight(self, pairs_weight):
-        self._check_weight_type(pairs_weight)
         pairs_weight = self._if_pandas_to_numpy(pairs_weight)
         self._check_weight_shape(pairs_weight, self.num_pairs())
         self._set_pairs_weight(pairs_weight)
         return self
 
     def set_timestamp(self, timestamp):
-        self._check_timestamp_type(timestamp)
         timestamp = self._if_pandas_to_numpy(timestamp)
         self._check_timestamp_shape(timestamp, self.num_row())
         self._set_timestamp(timestamp)
@@ -1295,6 +1288,8 @@ class Pool(_PoolBase):
             array = array.values
         if isinstance(array, DataFrame):
             array = np.transpose(array.values)[0]
+        if not isinstance(array, np.ndarray):
+            array = np.asarray(array)
         return array
 
     def _label_if_pandas_to_numpy(self, label):
@@ -1459,32 +1454,25 @@ class Pool(_PoolBase):
                 graph = graph.values
             self._check_pairs_value(graph)
         if weight is not None:
-            self._check_weight_type(weight)
             weight = self._if_pandas_to_numpy(weight)
             self._check_weight_shape(weight, samples_count)
         if group_id is not None:
-            self._check_group_id_type(group_id)
             group_id = self._if_pandas_to_numpy(group_id)
             self._check_group_id_shape(group_id, samples_count)
         if group_weight is not None:
-            self._check_group_weight_type(group_weight)
             group_weight = self._if_pandas_to_numpy(group_weight)
             self._check_group_weight_shape(group_weight, samples_count)
         if subgroup_id is not None:
-            self._check_subgroup_id_type(subgroup_id)
             subgroup_id = self._if_pandas_to_numpy(subgroup_id)
             self._check_subgroup_id_shape(subgroup_id, samples_count)
         if pairs_weight is not None:
-            self._check_weight_type(pairs_weight)
             pairs_weight = self._if_pandas_to_numpy(pairs_weight)
             self._check_weight_shape(pairs_weight, pairs_len)
         if baseline is not None:
-            self._check_baseline_type(baseline)
             baseline = self._if_pandas_to_numpy(baseline)
             baseline = np.reshape(baseline, (samples_count, -1))
             self._check_baseline_shape(baseline, samples_count)
         if timestamp is not None:
-            self._check_timestamp_type(timestamp)
             timestamp = self._if_pandas_to_numpy(timestamp)
             self._check_timestamp_shape(timestamp, samples_count)
         if feature_tags is not None:
