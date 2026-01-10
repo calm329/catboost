@@ -58,6 +58,24 @@ _set_logger = _catboost._set_logger
 _reset_logger = _catboost._reset_logger
 _configure_malloc = _catboost._configure_malloc
 CatBoostError = _catboost.CatBoostError
+
+try:
+    from sklearn.exceptions import NotFittedError as _NotFittedError
+except ImportError:
+    class _NotFittedError(ValueError):
+        """Fallback NotFittedError for when sklearn is not available."""
+        pass
+
+
+class CatBoostNotFittedError(CatBoostError, _NotFittedError):
+    """
+    Exception class to raise if estimator is used before fitting.
+
+    This class inherits from both CatBoostError and sklearn's NotFittedError
+    (when sklearn is available), providing compatibility with scikit-learn's
+    exception handling while maintaining CatBoost's error hierarchy.
+    """
+    pass
 _metric_description_or_str_to_str = _catboost._metric_description_or_str_to_str
 is_classification_objective = _catboost.is_classification_objective
 is_cv_stratified_objective = _catboost.is_cv_stratified_objective
@@ -1784,7 +1802,7 @@ class _CatBoostBase(object):
             if not estimator.is_fitted():
                 message = 'The {} argument is not fitted, only fitted models' \
                           ' could be compared.'
-                raise CatBoostError(message.format(side))
+                raise CatBoostNotFittedError(message.format(side))
         return True
 
     def _set_trained_model_attributes(self):
@@ -1807,7 +1825,7 @@ class _CatBoostBase(object):
             if self.is_fitted():
                 raise CatBoostError('The model has been trained without an eval set.')
             else:
-                raise CatBoostError('You should train the model first.')
+                raise CatBoostNotFittedError('You should train the model first.')
         if len(test_evals) > 1:
             raise CatBoostError("With multiple eval sets use 'get_test_evals()'")
         test_eval = test_evals[0]
@@ -1819,7 +1837,7 @@ class _CatBoostBase(object):
             if self.is_fitted():
                 raise CatBoostError('The model has been trained without an eval set.')
             else:
-                raise CatBoostError('You should train the model first.')
+                raise CatBoostNotFittedError('You should train the model first.')
         return test_evals
 
     def get_evals_result(self):
@@ -1949,12 +1967,12 @@ class _CatBoostBase(object):
 
     def _save_borders(self, output_file):
         if not self.is_fitted():
-            raise CatBoostError("There is no trained model to use save_borders(). Use fit() to train model. Then use save_borders().")
+            raise CatBoostNotFittedError("There is no trained model to use save_borders(). Use fit() to train model. Then use save_borders().")
         self._object._save_borders(output_file)
 
     def _get_borders(self):
         if not self.is_fitted():
-            raise CatBoostError("There is no trained model to use get_feature_borders(). Use fit() to train model. Then use get_borders().")
+            raise CatBoostNotFittedError("There is no trained model to use get_feature_borders(). Use fit() to train model. Then use get_borders().")
         return self._object._get_borders()
 
     def _get_nan_treatments(self):
@@ -2606,7 +2624,7 @@ class CatBoost(_CatBoostBase):
 
     def _process_predict_input_data(self, data, parent_method_name, thread_count, label=None):
         if not self.is_fitted() or self.tree_count_ is None:
-            raise CatBoostError(("There is no trained model to use {}(). "
+            raise CatBoostNotFittedError(("There is no trained model to use {}(). "
                                  "Use fit() to train model. Then use this method.").format(parent_method_name))
         is_single_object = _is_data_single_object(data)
         if not isinstance(data, Pool):
@@ -2903,22 +2921,22 @@ class CatBoost(_CatBoostBase):
 
     def get_cat_feature_indices(self):
         if not self.is_fitted():
-            raise CatBoostError("Model is not fitted")
+            raise CatBoostNotFittedError("Model is not fitted")
         return self._get_cat_feature_indices()
 
     def get_text_feature_indices(self):
         if not self.is_fitted():
-            raise CatBoostError("Model is not fitted")
+            raise CatBoostNotFittedError("Model is not fitted")
         return self._get_text_feature_indices()
 
     def get_embedding_feature_indices(self):
         if not self.is_fitted():
-            raise CatBoostError("Model is not fitted")
+            raise CatBoostNotFittedError("Model is not fitted")
         return self._get_embedding_feature_indices()
 
     def _eval_metrics(self, data, metrics, ntree_start, ntree_end, eval_period, thread_count, res_dir, tmp_dir, plot, plot_file, log_cout=None, log_cerr=None):
         if not self.is_fitted():
-            raise CatBoostError("There is no trained model to evaluate metrics on. Use fit() to train model. Then call this method.")
+            raise CatBoostNotFittedError("There is no trained model to evaluate metrics on. Use fit() to train model. Then call this method.")
         if not isinstance(data, Pool):
             raise CatBoostError("Invalid data type={}, must be catboost.Pool.".format(type(data)))
         if data.is_empty_:
@@ -3078,7 +3096,7 @@ class CatBoost(_CatBoostBase):
         metrics = batch_calcer.eval_metrics()
         """
         if not self.is_fitted():
-            raise CatBoostError("There is no trained model to evaluate metrics on. Use fit() to train model. Then call this method.")
+            raise CatBoostNotFittedError("There is no trained model to evaluate metrics on. Use fit() to train model. Then call this method.")
         return BatchMetricCalcer(self._object, metrics, ntree_start, ntree_end, eval_period, thread_count, tmp_dir)
 
     @property
@@ -3437,7 +3455,7 @@ class CatBoost(_CatBoostBase):
             Training pool.
         """
         if not self.is_fitted():
-            raise CatBoostError("There is no trained model to use save_model(). Use fit() to train model. Then use this method.")
+            raise CatBoostNotFittedError("There is no trained model to use save_model(). Use fit() to train model. Then use this method.")
         if not isinstance(fname, PATH_TYPES):
             raise CatBoostError("Invalid fname type={}: must be str or os.PathLike.".format(type(fname)))
         if pool is not None and not isinstance(pool, Pool):
@@ -3510,7 +3528,7 @@ class CatBoost(_CatBoostBase):
             Dictionary of {param_key: param_value}.
         """
         if not self.is_fitted():
-            raise CatBoostError("There is no trained model to use get_all_params(). Use fit() to train model. Then use this method.")
+            raise CatBoostNotFittedError("There is no trained model to use get_all_params(). Use fit() to train model. Then use this method.")
         return self._object._get_plain_params()
 
     def save_borders(self, fname):
@@ -5597,7 +5615,7 @@ class CatBoostClassifier(CatBoost):
         :param binclass_probability_threshold: float number in [0, 1] or None to discard it
         """
         if not self.is_fitted():
-            raise CatBoostError("You can't set probability threshold for not fitted model.")
+            raise CatBoostNotFittedError("You can't set probability threshold for not fitted model.")
         metadata = self.get_metadata()
         if binclass_probability_threshold is None:
             if 'binclass_probability_threshold' in metadata.keys():
@@ -5614,7 +5632,7 @@ class CatBoostClassifier(CatBoost):
         Get a threshold for class separation in binary classification task
         """
         if not self.is_fitted():
-            raise CatBoostError("Not fitted models don't have a probability threshold.")
+            raise CatBoostNotFittedError("Not fitted models don't have a probability threshold.")
         return self._object._get_binclass_probability_threshold()
 
     @staticmethod

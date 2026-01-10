@@ -1,5 +1,5 @@
 from . import _catboost
-from .core import Pool, CatBoostError, ARRAY_TYPES, PATH_TYPES, fspath, _update_params_quantize_part, _process_synonyms
+from .core import Pool, CatBoostError, CatBoostNotFittedError, ARRAY_TYPES, PATH_TYPES, fspath, _update_params_quantize_part, _process_synonyms
 from collections import defaultdict
 from contextlib import contextmanager
 import sys
@@ -742,7 +742,7 @@ def convert_to_onnx_object(model, export_parameters=None, **kwargs):
 
     import json
     if not model.is_fitted():
-        raise CatBoostError(
+        raise CatBoostNotFittedError(
             "There is no trained model to use save_model(). Use fit() to train model. Then use this method.")
 
     for name, value in kwargs.items():
