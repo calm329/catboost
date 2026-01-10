@@ -5005,6 +5005,13 @@ class CatBoostClassifier(CatBoost):
 
     eval_fraction : float, [default=None]
         Fraction of the train dataset to be used as the evaluation dataset.
+
+    warm_start : bool, [default=None]
+        If True, the next call to fit() will reuse the existing model and add
+        more trees (equivalent to using init_model=self in fit()).
+        If False or None (default), fit() will train a new model from scratch.
+        This is useful for iteratively adding trees or for use with sklearn
+        meta-algorithms that call fit() multiple times.
     """
 
     _estimator_type = 'classifier'
@@ -5129,7 +5136,8 @@ class CatBoostClassifier(CatBoost):
         embedding_features=None,
         callback=None,
         eval_fraction=None,
-        fixed_binary_splits=None
+        fixed_binary_splits=None,
+        warm_start=None
     ):
         params = {}
         not_params = ["not_params", "self", "params", "__class__"]
@@ -5250,6 +5258,9 @@ class CatBoostClassifier(CatBoost):
         params = self._get_canonized_params()
         if 'loss_function' in params:
             CatBoostClassifier._check_is_compatible_loss(params['loss_function'])
+
+        if self._init_params.get('warm_start') and init_model is None and self.is_fitted():
+            init_model = self
 
         self._fit(X, y, cat_features, text_features, embedding_features, None, graph, sample_weight, None, None, None, None, baseline, use_best_model,
                   eval_set, verbose, logging_level, plot, plot_file, column_description, verbose_eval, metric_period,
@@ -5758,7 +5769,8 @@ class CatBoostRegressor(CatBoost):
         text_processing=None,
         embedding_features=None,
         eval_fraction=None,
-        fixed_binary_splits=None
+        fixed_binary_splits=None,
+        warm_start=None
     ):
         params = {}
         not_params = ["not_params", "self", "params", "__class__"]
@@ -5878,6 +5890,10 @@ class CatBoostRegressor(CatBoost):
         params = self._get_canonized_params()
         if 'loss_function' in params:
             CatBoostRegressor._check_is_compatible_loss(params['loss_function'])
+
+        if self._init_params.get('warm_start') and init_model is None and self.is_fitted():
+            init_model = self
+
         return self._fit(X, y, cat_features, text_features, embedding_features, None, graph, sample_weight, None, None, None, None, baseline,
                          use_best_model, eval_set, verbose, logging_level, plot, plot_file, column_description,
                          verbose_eval, metric_period, silent, early_stopping_rounds,
@@ -6166,7 +6182,8 @@ class CatBoostRanker(CatBoost):
         text_processing=None,
         embedding_features=None,
         eval_fraction=None,
-        fixed_binary_splits=None
+        fixed_binary_splits=None,
+        warm_start=None
     ):
         params = {}
         not_params = ["not_params", "self", "params", "__class__"]
@@ -6285,6 +6302,9 @@ class CatBoostRanker(CatBoost):
         params = self._get_canonized_params()
         if 'loss_function' in params:
             CatBoostRanker._check_is_compatible_loss(params['loss_function'])
+
+        if self._init_params.get('warm_start') and init_model is None and self.is_fitted():
+            init_model = self
 
         self._fit(X, y, cat_features, text_features, embedding_features, pairs, graph,
                   sample_weight, group_id, group_weight, subgroup_id, pairs_weight, baseline, use_best_model,
